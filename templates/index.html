@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سایت آگهی کاری</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .category-btn {
+            margin: 5px;
+            flex: 1 0 18%;
+            max-width: 18%;
+        }
+        .ad-card {
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        .ad-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .job-seeker {
+            border-right: 4px solid #28a745;
+        }
+        .job-poster {
+            border-right: 4px solid #007bff;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+        }
+        .category-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        {% if global_message %}
+        <div class="alert alert-info alert-dismissible fade show">
+            {{ global_message }}
+            <form method="post" action="{{ url_for('clear_global_message') }}" style="display: inline;">
+                <button type="submit" class="btn-close"></button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div class="row mb-4">
+            <div class="col-md-6 mx-auto text-center">
+                <h1 class="display-4">سایت آگهی کاری</h1>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-8 mx-auto">
+                <form method="post" class="d-flex">
+                    <input type="text" name="search_term" class="form-control me-2" placeholder="جستجو در آگهی ها...">
+                    <button type="submit" name="search" class="btn btn-primary">جستجو</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-grid gap-2 d-md-block text-center">
+                    <button class="btn btn-primary me-md-2" type="button" data-bs-toggle="modal" data-bs-target="#adModal">ثبت آگهی کار</button>
+                    <a href="#ads-section" class="btn btn-success">آگهی های موجود</a>
+                    
+                    {% if notifications and notifications|length > 0 %}
+                    <div class="dropdown d-inline-block ms-md-2">
+                        <button class="btn btn-warning dropdown-toggle position-relative" type="button" id="notificationsDropdown" data-bs-toggle="dropdown">
+                            اعلان‌ها
+                            <span class="notification-badge badge bg-danger rounded-pill">{{ notifications|length }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
+                            {% for notif in notifications %}
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <strong>{{ notif.message }}</strong><br>
+                                    <small>{{ notif.description }}</small><br>
+                                    <small>{{ notif.phone }}</small>
+                                </a>
+                            </li>
+                            {% endfor %}
+                            <li>
+                                <form method="post" action="{{ url_for('clear_notifications') }}">
+                                    <button type="submit" class="dropdown-item text-danger">پاک کردن همه</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Ad Submission Modal -->
+        <div class="modal fade" id="adModal" tabindex="-1" aria-labelledby="adModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="adModalLabel">ثبت آگهی جدید</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="post" action="{{ url_for('submit_ad') }}">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">نوع آگهی</label>
+                                <select class="form-select" name="ad_type" required>
+                                    <option value="" selected disabled>انتخاب کنید</option>
+                                    <option value="جویای کار">جویای کار</option>
+                                    <option value="کارفرما">کارفرما</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">دسته بندی شغل</label>
+                                <div class="category-container">
+                                    {% for category in categories %}
+                                    <button type="button" class="btn btn-outline-secondary category-btn" onclick="document.getElementById('category').value='{{ category }}'">
+                                        {{ category }}
+                                    </button>
+                                    {% endfor %}
+                                </div>
+                                <input type="text" id="category" name="category" class="form-control mt-2" required readonly>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">توضیحات</label>
+                                <textarea class="form-control" name="description" rows="3" required placeholder="توضیحات درباره خود یا سابقه کار"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">شماره تماس</label>
+                                <input type="text" class="form-control" name="phone" required placeholder="شماره تماس">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                            <button type="submit" class="btn btn-primary">ثبت آگهی</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ads Section -->
+        <div id="ads-section" class="row mt-5">
+            <div class="col-12">
+                <h2 class="mb-4">آگهی های موجود</h2>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                {% if ads %}
+                    <div class="row">
+                        {% for ad in ads %}
+                        <div class="col-md-6">
+                            <div class="card ad-card {{ 'job-seeker' if ad.ad_type == 'جویای کار' else 'job-poster' }}">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        {{ ad.ad_type }} - {{ ad.category }}
+                                        <small class="text-muted float-start">{{ ad.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </h5>
+                                    <p class="card-text">{{ ad.description }}</p>
+                                    <p class="card-text"><small class="text-muted">شماره تماس: {{ ad.phone }}</small></p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">هیچ آگهی فعالی وجود ندارد.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar fixed-bottom navbar-expand-sm navbar-dark bg-dark">
+        <div class="container justify-content-center">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#adModal">ثبت آگهی کار</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#ads-section">آگهی کار های موجود</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-close alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                new bootstrap.Alert(alert).close();
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
